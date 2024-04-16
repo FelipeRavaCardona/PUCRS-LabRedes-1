@@ -1,10 +1,8 @@
-from udp import udp_client as conn
-
 nickname = None
 
-def register(nickname):
+def register(new_nickname):
+    global nickname
     # TODO: send nickname to server and handle return
-    conn.register()
     print(nickname)
 
 def send_message(recipient, message):
@@ -35,14 +33,25 @@ while True:
                 continue
             register(action_parts[1])
         case '/MSG':
+            if not nickname:
+                print('User not registered.')
+                continue
             if len(action_parts) != 3:
                 print('Command is missing parts.')
+                continue
             send_message(action_parts[1], action_parts[2])
         case '/FILE':
+            if not nickname:
+                print('User not registered.')
+                continue
             if len(action_parts) != 4:
                 print('Command is missing parts.')
+                continue
             send_file(action_parts[1], action_parts[2], action_parts[3])
         case '/OFF':
+            if not nickname:
+                print('User not registered.')
+                continue
             end_connection()
             break
         case _:
