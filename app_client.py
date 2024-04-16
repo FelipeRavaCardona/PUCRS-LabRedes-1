@@ -1,13 +1,22 @@
+import threading
+from udp import udp_client as client
+
 nickname = None
 
 def register(new_nickname):
     global nickname
     # TODO: send nickname to server and handle return
-    print(nickname)
+    response = client.register(new_nickname)
+    nickname = new_nickname
+    # print(response)
+    # if response['code'] == 0:
+    #     nickname = new_nickname
+    # print(nickname)
 
 def send_message(recipient, message):
     # TODO: send message to recipient
-    print(recipient)
+    response = client.send_msg(recipient, message)
+    print(response)
 
 def send_file(recipient, file_name, message):
     # TODO: send file and message to recipient
@@ -20,6 +29,10 @@ def end_connection():
 def handle_received_data():
     # TODO: receive messages from server and handle them
     print('handling messages...')
+
+receiving_thread = threading.Thread(target=client.receive_data)
+receiving_thread.daemon = True
+receiving_thread.start()
 
 while True:
     action = input()

@@ -1,10 +1,14 @@
 import json
 import socket
 
+server_socket = None
 users = []
 
 def find_user_by_address(ip, port):
+    global users
+    print(users)
     for user in users:
+        print(user)
         if user['ip'] == ip and user['port'] == port:
             return user
     return None
@@ -12,8 +16,8 @@ def find_user_by_address(ip, port):
 def find_user_by_nickname(nickname):
     for user in users:
         if user['nickname'] == nickname:
-            return True
-    return False
+            return user
+    return None
 
 def handle_registration(nickname, sender_ip, sender_port):
     if find_user_by_nickname(nickname):
@@ -34,14 +38,25 @@ def handle_registration(nickname, sender_ip, sender_port):
         'message': 'User registered successfully.'
     })
 
-def handle_message(sender_ip, sender_port, recipient, message):
-    if recipient not in users:
+def handle_message(sender_ip, sender_port, message_data):
+    recipient = find_user_by_nickname(message_data['recipient'])
+    if not recipient:
         return json.dumps({
             'OPCODE': 2,
             'code': 1,
             'message': f"{recipient} is not online."
         })
     # TODO: Send message to recipient
+    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
+        print(f"ip {sender_ip}, port {sender_port}")
+        sender = find_user_by_address(sender_ip, sender_port)
+        print(sender)
+        message = json.dumps({
+            'OPCODE': 2,
+            'sender': sender['nickname'],
+            'message': message_data['message']
+        })
+        sock.sendto(message.encode(), (recipient['ip'], recipient['port']))
     return json.dumps({
         'OPCODE': 2,
         'code': 0,
@@ -83,7 +98,7 @@ def handle_received(data, sender_ip, sender_port):
         case 1:
             return handle_registration(message['nickname'], sender_ip, sender_port)
         case 2:
-            return handle_message(sender_ip, sender_port, message['recipient'], message['message'])
+            return handle_message(sender_ip, sender_port, message)
         case 3:
             return handle_file(sender_ip, sender_port, message['recipient'], message['file'], message['message'])
         case 4:
@@ -93,6 +108,7 @@ def handle_received(data, sender_ip, sender_port):
 
 def start_server_udp(host, port):
     # TODO: follow commented code?
+    global server_socket
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     server_socket.bind((host, port))
     print(f"UDP server listening on {host}:{port}")
