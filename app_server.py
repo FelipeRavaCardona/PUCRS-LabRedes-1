@@ -6,9 +6,7 @@ users = []
 
 def find_user_by_address(ip, port):
     global users
-    print(users)
     for user in users:
-        print(user)
         if user['ip'] == ip and user['port'] == port:
             return user
     return None
