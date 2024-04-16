@@ -29,6 +29,14 @@ def send_msg(recipient, message):
     })
     client_socket.sendto(message.encode(), SERVER_ADDRESS)
 
+def send_file(recipient, file, message):
+    message = json.dumps({
+        'OPCODE': 3,
+        'recipient': recipient,
+        'file': file,
+        'message': message
+    })
+    client_socket.sendto(message.encode(), SERVER_ADDRESS)
 
 def receive_data():
     while True:

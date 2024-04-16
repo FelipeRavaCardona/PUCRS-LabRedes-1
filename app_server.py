@@ -45,7 +45,6 @@ def handle_message(sender_ip, sender_port, message_data):
             'code': 1,
             'message': f"{message_data['recipient']} is not online."
         })
-    # TODO: Send message to recipient
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
         sender = find_user_by_address(sender_ip, sender_port)
         print(f"Message sent from {sender['nickname']} to {recipient['nickname']}")
@@ -61,14 +60,25 @@ def handle_message(sender_ip, sender_port, message_data):
         'message': f"Message sent to {recipient['nickname']}."
     })
 
-def handle_file(sender_ip, sender_port, recipient, file, message):
-    if recipient not in users:
+def handle_file(sender_ip, sender_port, message_data):
+    recipient = find_user_by_nickname(message_data['recipient'])
+    if not recipient:
         return json.dumps({
-            'OPCODE': 3,
+            'OPCODE': 2,
             'code': 1,
-            'message': f"{recipient} is not online."
+            'message': f"{message_data['recipient']} is not online."
         })
     # TODO: Send file and message to recipient
+    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
+        sender = find_user_by_address(sender_ip, sender_port)
+        print(f"File sent from {sender['nickname']} to {recipient['nickname']}")
+        message = json.dumps({
+            'OPCODE': 6,
+            'sender': sender['nickname'],
+            'file': message_data['file'],
+            'message': message_data['message']
+        })
+        sock.sendto(message.encode(), (recipient['ip'], recipient['port']))
     return json.dumps({
         'OPCODE': 2,
         'code': 0,
@@ -98,7 +108,7 @@ def handle_received(data, sender_ip, sender_port):
         case 2:
             return handle_message(sender_ip, sender_port, message)
         case 3:
-            return handle_file(sender_ip, sender_port, message['recipient'], message['file'], message['message'])
+            return handle_file(sender_ip, sender_port, message)
         case 4:
             return handle_disconnect(sender_ip, sender_port)
         case _:
@@ -112,7 +122,7 @@ def start_server_udp(host, port):
     print(f"UDP server listening on {host}:{port}")
 
     while True:
-        data, address = server_socket.recvfrom(1024)
+        data, address = server_socket.recvfrom(2000)
         response = handle_received(data, address[0], address[1])
         server_socket.sendto(response.encode(), address)
 

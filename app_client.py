@@ -1,3 +1,4 @@
+import base64
 import threading
 from udp import udp_client as client
 
@@ -11,7 +12,10 @@ def send_message(recipient, message):
 
 def send_file(recipient, file_name, message):
     # TODO: send file and message to recipient
-    print(file_name)
+    with open(f"./files/{file_name}", 'rb') as file:
+        file_data = file.read()
+    
+    client.send_file(recipient, base64.b64encode(file_data).decode('utf-8'), message)
 
 def end_connection():
     # TODO: send message finishing connection with server
@@ -37,6 +41,9 @@ def handle_received_data():
                 print(message)
             case 5:
                 print(f"{message['sender']}: {message['message']}")
+            case 6:
+                print('received file')
+                print(message)
 
 def parse_input(input):
     first_quote_index = input.find('"')
