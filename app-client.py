@@ -1,30 +1,4 @@
-def app():
-    nickname = None
-
-    while True:
-        action = input()
-        action_parts = action.split()
-        match action_parts[0]:
-            case '/REG':
-                if len(action_parts) != 2:
-                    print('Missing nickname.')
-                if nickname:
-                    print('User already registered.')
-                    continue
-                register(action_parts[1])
-            case '/MSG':
-                if len(action_parts) != 3:
-                    print('Command is missing parts.')
-                send_message(action_parts[1], action_parts[2])
-            case '/FILE':
-                if len(action_parts) != 4:
-                    print('Command is missing parts.')
-                send_file(action_parts[1], action_parts[2], action_parts[3])
-            case '/OFF':
-                end_connection()
-                break
-            case _:
-                print(f"'{action_parts[0]}' is not a known command.")
+nickname = None
 
 def register(nickname):
     # TODO: send nickname to server and handle return
@@ -46,4 +20,27 @@ def handle_received_data():
     # TODO: receive messages from server and handle them
     print('handling messages...')
 
-app()
+while True:
+    action = input()
+    action_parts = action.split()
+    match action_parts[0]:
+        case '/REG':
+            if len(action_parts) != 2:
+                print('Missing nickname.')
+            if nickname:
+                print('User already registered.')
+                continue
+            register(action_parts[1])
+        case '/MSG':
+            if len(action_parts) != 3:
+                print('Command is missing parts.')
+            send_message(action_parts[1], action_parts[2])
+        case '/FILE':
+            if len(action_parts) != 4:
+                print('Command is missing parts.')
+            send_file(action_parts[1], action_parts[2], action_parts[3])
+        case '/OFF':
+            end_connection()
+            break
+        case _:
+            print(f"'{action_parts[0]}' is not a known command.")
