@@ -1,4 +1,5 @@
 import json
+import socket
 
 users = []
 
@@ -26,6 +27,7 @@ def handle_registration(nickname, sender_ip, sender_port):
         'ip': sender_ip,
         'port': sender_port
     })
+    print(f"{nickname}({sender_ip}:{sender_port}) connected.")
     return json.dumps({
         'OPCODE': 1,
         'code': 0,
@@ -76,23 +78,31 @@ def handle_disconnect(sender_ip, sender_port):
     })
 
 def handle_received(data, sender_ip, sender_port):
-    message = data.decode()
-    match message.OPCODE:
+    message = json.loads(data.decode('utf-8'))
+    match message['OPCODE']:
         case 1:
-            return handle_registration(data.nickname, sender_ip, sender_port)
+            return handle_registration(message['nickname'], sender_ip, sender_port)
         case 2:
-            return handle_message(sender_ip, sender_port, data.recipient, data.message)
+            return handle_message(sender_ip, sender_port, message['recipient'], message['message'])
         case 3:
-            return handle_file(sender_ip, sender_port, data.recipient, data.file, data.message)
+            return handle_file(sender_ip, sender_port, message['recipient'], message['file'], message['message'])
         case 4:
             return handle_disconnect(sender_ip, sender_port)
         case _:
             return f"OPCODE '{message.OPCODE} is not known."
 
-def start_server(host, port):
+def start_server_udp(host, port):
     # TODO: follow commented code?
-    print('starting server...')
+    server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    server_socket.bind((host, port))
+    print(f"UDP server listening on {host}:{port}")
 
+    while True:
+        data, address = server_socket.recvfrom(1024)
+        response = handle_received(data, address[0], address[1])
+        server_socket.sendto(response.encode(), address)
+
+start_server_udp('localhost', 3000)
 # import socket
 
 # def start_server(host, port):
