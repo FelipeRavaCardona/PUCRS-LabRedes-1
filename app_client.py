@@ -1,7 +1,10 @@
+from udp import udp_client as conn
+
 nickname = None
 
 def register(nickname):
     # TODO: send nickname to server and handle return
+    conn.register()
     print(nickname)
 
 def send_message(recipient, message):
