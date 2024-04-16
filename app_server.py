@@ -1,22 +1,38 @@
 import json
 
-users = {}
+users = []
 
-def handle_registration(nickname, address):
-    if nickname in users:
+def find_user_by_address(ip, port):
+    for user in users:
+        if user['ip'] == ip and user['port'] == port:
+            return user
+    return None
+
+def find_user_by_nickname(nickname):
+    for user in users:
+        if user['nickname'] == nickname:
+            return True
+    return False
+
+def handle_registration(nickname, sender_ip, sender_port):
+    if find_user_by_nickname(nickname):
         return json.dumps({
             'OPCODE': 1,
             'code': 1,
             'message': 'Nickname already used.'
         })
-    users[nickname] = address
+    users.append({
+        'nickname': nickname,
+        'ip': sender_ip,
+        'port': sender_port
+    })
     return json.dumps({
         'OPCODE': 1,
         'code': 0,
         'message': 'User registered successfully.'
     })
 
-def handle_message(sender, recipient, message):
+def handle_message(sender_ip, sender_port, recipient, message):
     if recipient not in users:
         return json.dumps({
             'OPCODE': 2,
@@ -30,7 +46,7 @@ def handle_message(sender, recipient, message):
         'message': f"Message sent to {recipient}."
     })
 
-def handle_file(sender, recipient, file, message):
+def handle_file(sender_ip, sender_port, recipient, file, message):
     if recipient not in users:
         return json.dumps({
             'OPCODE': 3,
@@ -44,13 +60,14 @@ def handle_file(sender, recipient, file, message):
         'message': f"File sent to {recipient}."
     })
 
-def handle_disconnect(sender):
-    if sender in users:
-        del users[sender]
+def handle_disconnect(sender_ip, sender_port):
+    sender = find_user_by_address(sender_ip, sender_port)
+    if sender:
+        users.remove(sender)
         return json.dumps({
             'OPCODE': 4,
             'code': 0,
-            'message': f"{sender} disconnected."
+            'message': f"{sender.nickname} disconnected."
         })
     return json.dumps({
         'OPCODE': 4,
@@ -58,17 +75,17 @@ def handle_disconnect(sender):
         'message': 'User does not exist.'
     })
 
-def handle_received(data, address):
+def handle_received(data, sender_ip, sender_port):
     message = data.decode()
     match message.OPCODE:
         case 1:
-            return handle_registration(data.nickname, address)
+            return handle_registration(data.nickname, sender_ip, sender_port)
         case 2:
-            return handle_message(address, data.recipient, data.message)
+            return handle_message(sender_ip, sender_port, data.recipient, data.message)
         case 3:
-            return handle_file(address, data.recipient, data.file, data.message)
+            return handle_file(sender_ip, sender_port, data.recipient, data.file, data.message)
         case 4:
-            return handle_disconnect(address)
+            return handle_disconnect(sender_ip, sender_port)
         case _:
             return f"OPCODE '{message.OPCODE} is not known."
 
