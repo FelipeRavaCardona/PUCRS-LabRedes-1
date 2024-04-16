@@ -35,7 +35,8 @@ def handle_registration(nickname, sender_ip, sender_port):
     return json.dumps({
         'OPCODE': 1,
         'code': 0,
-        'message': 'User registered successfully.'
+        'message': 'User registered successfully.',
+        'nickname': nickname
     })
 
 def handle_message(sender_ip, sender_port, message_data):
@@ -44,15 +45,14 @@ def handle_message(sender_ip, sender_port, message_data):
         return json.dumps({
             'OPCODE': 2,
             'code': 1,
-            'message': f"{recipient} is not online."
+            'message': f"{message_data['recipient']} is not online."
         })
     # TODO: Send message to recipient
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
-        print(f"ip {sender_ip}, port {sender_port}")
         sender = find_user_by_address(sender_ip, sender_port)
-        print(sender)
+        print(f"Message sent from {sender['nickname']} to {recipient['nickname']}")
         message = json.dumps({
-            'OPCODE': 2,
+            'OPCODE': 5,
             'sender': sender['nickname'],
             'message': message_data['message']
         })
@@ -60,7 +60,7 @@ def handle_message(sender_ip, sender_port, message_data):
     return json.dumps({
         'OPCODE': 2,
         'code': 0,
-        'message': f"Message sent to {recipient}."
+        'message': f"Message sent to {recipient['nickname']}."
     })
 
 def handle_file(sender_ip, sender_port, recipient, file, message):
