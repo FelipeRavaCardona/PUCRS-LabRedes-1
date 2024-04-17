@@ -36,6 +36,12 @@ def send_file(recipient, file, message):
     })
     client_socket.sendto(message.encode(), SERVER_ADDRESS)
 
+def send_disconnect():
+    message = json.dumps({
+        'OPCODE': 4
+    })
+    client_socket.sendto(message.encode(), SERVER_ADDRESS)
+
 def receive_data():
     while True:
         response, _ = client_socket.recvfrom(BUFF_SIZE)

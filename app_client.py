@@ -17,9 +17,8 @@ def send_file(recipient, file_name, message):
     client.send_file(recipient, base64.b64encode(file_data).decode('utf-8'), message)
 
 def end_connection():
-    # TODO: send message finishing connection with server
-    print('Ending connection...')
-
+    client.send_disconnect()
+    
 def handle_received_data():
     # TODO: receive messages from server and handle them
     while True:
@@ -37,7 +36,8 @@ def handle_received_data():
             case 3:
                 print(message['message'])
             case 4:
-                print(message)
+                print(message['message'])
+                nickname = None
             case 5:
                 print(f"{message['sender']}: {message['message']}")
             case 6:
@@ -100,6 +100,6 @@ while True:
                 print('User not registered.')
                 continue
             end_connection()
-            break
+            # break
         case _:
             print(f"'{action_parts[0]}' is not a known command.")

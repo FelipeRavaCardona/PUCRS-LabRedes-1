@@ -89,10 +89,11 @@ def handle_disconnect(sender_ip, sender_port):
     sender = find_user_by_address(sender_ip, sender_port)
     if sender:
         users.remove(sender)
+        print(f"{sender['nickname']} disconnected.")
         return json.dumps({
             'OPCODE': 4,
             'code': 0,
-            'message': f"{sender.nickname} disconnected."
+            'message': f"{sender['nickname']} disconnected."
         })
     return json.dumps({
         'OPCODE': 4,
