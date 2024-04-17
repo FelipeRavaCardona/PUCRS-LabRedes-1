@@ -50,17 +50,13 @@ def parse_input(input):
     last_quote_index = input.rfind('"')
     
     action_parts = None
-    # If both quotes are found and the first quote comes before the last one
     if first_quote_index != -1 and last_quote_index != -1 and first_quote_index < last_quote_index:
-        # Split the string into three parts: before message, message, after message
         before_message = input[:first_quote_index].split()
         message = input[first_quote_index + 1:last_quote_index]
         after_message = input[last_quote_index + 1:].split()
         
-        # Combine parts before message, message, and after message
         action_parts = before_message + [message] + after_message
     else:
-        # If quotes are not found or not properly placed, split normally
         action_parts = action.split()
     return action_parts
 
