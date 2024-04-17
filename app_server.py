@@ -82,7 +82,7 @@ def handle_file(sender_ip, sender_port, message_data):
     return json.dumps({
         'OPCODE': 2,
         'code': 0,
-        'message': f"File sent to {recipient}."
+        'message': f"File sent to {message_data['recipient']}."
     })
 
 def handle_disconnect(sender_ip, sender_port):

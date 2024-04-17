@@ -11,7 +11,6 @@ def send_message(recipient, message):
     client.send_msg(recipient, message)
 
 def send_file(recipient, file_name, message):
-    # TODO: send file and message to recipient
     with open(f"./files/{file_name}", 'rb') as file:
         file_data = file.read()
     
@@ -36,14 +35,15 @@ def handle_received_data():
             case 2:
                 print(message['message'])
             case 3:
-                print(message)
+                print(message['message'])
             case 4:
                 print(message)
             case 5:
                 print(f"{message['sender']}: {message['message']}")
             case 6:
-                print('received file')
-                print(message)
+                print(f"{message['sender']} sent you a file with message: {message['message']}")
+                with open(f"./received/{message['sender']}.txt", 'wb') as file:
+                    file.write(base64.b64decode(message['file']))
 
 def parse_input(input):
     first_quote_index = input.find('"')
