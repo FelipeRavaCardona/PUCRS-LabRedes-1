@@ -18,8 +18,6 @@ def register(nickname):
     })
 
     client_socket.sendto(message.encode(), SERVER_ADDRESS)
-    # response, _ = client_socket.recvfrom(BUFF_SIZE)
-    # return json.loads(response.decode('utf-8'))
 
 def send_msg(recipient, message):
     message = json.dumps({
