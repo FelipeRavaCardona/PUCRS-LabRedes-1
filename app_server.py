@@ -1,7 +1,7 @@
 import json
-import socket
+import threading
+from udp import udp_server as server
 
-server_socket = None
 users = []
 
 def find_user_by_address(ip, port):
@@ -45,15 +45,14 @@ def handle_message(sender_ip, sender_port, message_data):
             'code': 1,
             'message': f"{message_data['recipient']} is not online."
         })
-    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
-        sender = find_user_by_address(sender_ip, sender_port)
-        print(f"Message sent from {sender['nickname']} to {recipient['nickname']}")
-        message = json.dumps({
-            'OPCODE': 5,
-            'sender': sender['nickname'],
-            'message': message_data['message']
-        })
-        sock.sendto(message.encode(), (recipient['ip'], recipient['port']))
+    sender = find_user_by_address(sender_ip, sender_port)
+    print(f"Message sent from {sender['nickname']} to {recipient['nickname']}")
+    message = json.dumps({
+        'OPCODE': 5,
+        'sender': sender['nickname'],
+        'message': message_data['message']
+    })
+    server.send_data(message, (recipient['ip'], recipient['port']))
     return json.dumps({
         'OPCODE': 2,
         'code': 0,
@@ -68,16 +67,15 @@ def handle_file(sender_ip, sender_port, message_data):
             'code': 1,
             'message': f"{message_data['recipient']} is not online."
         })
-    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
-        sender = find_user_by_address(sender_ip, sender_port)
-        print(f"File sent from {sender['nickname']} to {recipient['nickname']}")
-        message = json.dumps({
-            'OPCODE': 6,
-            'sender': sender['nickname'],
-            'file': message_data['file'],
-            'message': message_data['message']
-        })
-        sock.sendto(message.encode(), (recipient['ip'], recipient['port']))
+    sender = find_user_by_address(sender_ip, sender_port)
+    print(f"File sent from {sender['nickname']} to {recipient['nickname']}")
+    message = json.dumps({
+        'OPCODE': 6,
+        'sender': sender['nickname'],
+        'file': message_data['file'],
+        'message': message_data['message']
+    })
+    server.send_data(message, (recipient['ip'], recipient['port']))
     return json.dumps({
         'OPCODE': 2,
         'code': 0,
@@ -100,29 +98,25 @@ def handle_disconnect(sender_ip, sender_port):
         'message': 'User does not exist.'
     })
 
-def handle_received(data, sender_ip, sender_port):
-    message = json.loads(data.decode('utf-8'))
-    match message['OPCODE']:
-        case 1:
-            return handle_registration(message['nickname'], sender_ip, sender_port)
-        case 2:
-            return handle_message(sender_ip, sender_port, message)
-        case 3:
-            return handle_file(sender_ip, sender_port, message)
-        case 4:
-            return handle_disconnect(sender_ip, sender_port)
-        case _:
-            return f"OPCODE '{message.OPCODE} is not known."
-
-def start_server_udp(host, port):
-    global server_socket
-    server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    server_socket.bind((host, port))
-    print(f"UDP server listening on {host}:{port}")
-
+def handle_received():
     while True:
-        data, address = server_socket.recvfrom(2000)
-        response = handle_received(data, address[0], address[1])
-        server_socket.sendto(response.encode(), address)
+        data, address = server.message_queue.get()
+        message = json.loads(data.decode('utf-8'))
+        sender_ip, sender_port = address
+        match message['OPCODE']:
+            case 1:
+                server.send_data(handle_registration(message['nickname'], sender_ip, sender_port), address)
+            case 2:
+                server.send_data(handle_message(sender_ip, sender_port, message), address)
+            case 3:
+                server.send_data(handle_file(sender_ip, sender_port, message), address)
+            case 4:
+                server.send_data(handle_disconnect(sender_ip, sender_port), address)
+            case _:
+                server.send_data(f"OPCODE '{message.OPCODE} is not known.", address)
 
-start_server_udp('localhost', 3000)
+receiving_thread = threading.Thread(target=server.receive_data)
+receiving_thread.daemon = True
+receiving_thread.start()
+
+handle_received()
