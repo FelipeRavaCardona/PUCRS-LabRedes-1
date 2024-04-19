@@ -1,3 +1,4 @@
+import json
 import base64
 import threading
 from udp import udp_client as client
@@ -5,19 +6,37 @@ from udp import udp_client as client
 nickname = None
 
 def register(new_nickname):
-    client.register(new_nickname)
+    message = json.dumps({
+        'OPCODE': 1,
+        'nickname': new_nickname
+    })
+    client.send_data(message)
 
 def send_message(recipient, message):
-    client.send_msg(recipient, message)
+    message = json.dumps({
+        'OPCODE': 2,
+        'recipient': recipient,
+        'message': message
+    })
+    client.send_data(message)
 
 def send_file(recipient, file_name, message):
     with open(f"./files/{file_name}", 'rb') as file:
         file_data = file.read()
     
-    client.send_file(recipient, base64.b64encode(file_data).decode('utf-8'), message)
+    message = json.dumps({
+        'OPCODE': 3,
+        'recipient': recipient,
+        'file': base64.b64encode(file_data).decode('utf-8'),
+        'message': message
+    })
+    client.send_data(message)
 
 def end_connection():
-    client.send_disconnect()
+    message = json.dumps({
+        'OPCODE': 4
+    })
+    client.send_data(message)
     
 def handle_received_data():
     # TODO: receive messages from server and handle them
