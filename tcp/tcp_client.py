@@ -16,7 +16,6 @@ def register(sock, nickname):
     })
     sock.sendall(message.encode())
     user_nickname = nickname
-    print("masoqqqqqqqqqqqqqqqqqqqqqqq")
 
 def send_message(sock, recipient, message):
     # TODO: send message to recipient
@@ -36,6 +35,10 @@ import os
 
 def send_file(sock, recipient, file_name, message):
     # Lê o arquivo em modo binário e armazena em uma variável
+    if '"' in file_name or "'" in file_name:
+        print("Erro nome do arquivo inválido")
+        return
+    
     file_path = f"repo/{file_name}"
     try:
         with open(file_path, 'rb') as file:
@@ -52,7 +55,8 @@ def send_file(sock, recipient, file_name, message):
         'OPCODE': 3,  # OPCODE diferente para diferenciar o tipo de operação
         'recipient': recipient,
         'file': file_data_encoded,
-        'message': message
+        'message': message,
+        'file_name': file_name
     }
 
     # Converte o dicionário para JSON e codifica em bytes
@@ -61,13 +65,19 @@ def send_file(sock, recipient, file_name, message):
 
     print("Arquivo e mensagem enviados!")
     print(f"Destinatário: {recipient}")
-    print(f"Arquivo: {file_path}")
+    print(f"Arquivo: {file_name}")
     print(f"Mensagem: {message}")
 
 
-def end_connection():
-    # TODO: send message finishing connection with server
-    print('Ending connection...')
+def end_connection(sock):
+    message = json.dumps({
+        'OPCODE': 4
+    })
+    sock.sendall(message.encode())
+    print()
+    print()
+    print("Pedido de desconexão enviado! ")
+    
 
 
 def send_messages(sock):
@@ -81,7 +91,7 @@ def send_messages(sock):
                 print('Missing nickname.')
                 continue
             if user_nickname:
-                print('User already registered. DOne')
+                print(f'User already registered as{user_nickname}')
                 continue
             register(sock, action_parts[1])
         
@@ -100,17 +110,18 @@ def send_messages(sock):
                 continue
             if len(action_parts) != 4:
                 print('Command is missing parts.')
-                print(action_parts[1])
-                print(action_parts[2])
-                print(action_parts[3])
+            
                 continue
-            send_file(sock, action_parts[1], action_parts[2], action_parts[3])
+            recipient = action_parts[1]
+            file_name = action_parts[2]
+            message = action_parts[3]
+            send_file(sock, recipient, file_name, message)
         
         elif command == '/OFF':
             if not user_nickname:
                 print('User not registered.')
                 continue
-            end_connection()
+            end_connection(sock)
             break
         
         else:
@@ -126,32 +137,43 @@ def receive_messages(sock):
         message = json.loads(data.decode('utf-8'))
         if message['OPCODE'] == 2:
             code = message.get('code')
+            print()
+            print()
             if code == 0:
                 print(f"Mensagem do servidor: {message['message']}")
             elif code == 1:
                 print(f"Mensagem do servidor: {message['message']}")
             else:
                 print(f"Usuario: {message['sender']} enviou: {message['message']}")
-        if message['OPCODE'] == 3:
+        elif message['OPCODE'] == 3:
             code = message.get('code')
             if code == 0 or code == 1:
                 print(f"Mensagem do servidor: {message['message']}")
             else:
                 # Decodifica os dados do arquivo
                 file_data = base64.b64decode(message['file'])
-                
+                file_name = message['file_name']
+                user_message = message['message']
+                sender = message['sender']
                 # Cria o diretório 'recebidas' se não existir
                 os.makedirs('recebidas', exist_ok=True)
-                string_aleatoria = ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(10))
-                string_aleatoria = string_aleatoria + ".txt"
                 
                 # Salva o arquivo
-                file_path = os.path.join('recebidas', string_aleatoria)
+                file_path = os.path.join('recebidas', file_name)
                 with open(file_path, 'wb') as file:
                     file.write(file_data)
-                
-                print(f"Arquivo {string_aleatoria} recebido e salvo em 'recebidas'.")
-                print(f"Usuario: {message['sender']} enviou: {message['message']}")
+                print()
+                print()
+                print(f"Arquivo {file_name} recebido e salvo em 'recebidas'.")
+                print(f"Usuario: {sender} enviou: {user_message}")
+        elif message['OPCODE'] == 4:
+            code = message.get('code')
+            if code == 0 or code == 1:
+                print(f"Mensagem do servidor: {message['message']}")
+            else:
+                user_nickname = None
+                print("Disconected from the server.")
+                break
         else:
             print(f"Recebido do servidor: {message}")
 
