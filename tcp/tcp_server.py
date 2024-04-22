@@ -63,7 +63,6 @@ def handle_received_tcp(data, conn, sender_ip, sender_port):
             return "Nickname is required for OPCODE 1"
         return handle_registration_tcp(nickname, conn, sender_ip, sender_port)
     elif opcode == 2:
-        print("oba---------")
         return handle_message_tcp(sender_ip, sender_port, message)
     elif opcode == 3:
         recipient = message.get('recipient')
@@ -140,7 +139,7 @@ def handle_file_tcp(sender_ip, sender_port, message_data):
         'OPCODE': 3,
         'sender': sender['nickname'],
         'message': message_data['message'],
-        'file' : "file"
+        'file' : message_data['file']
     })
     recipient['connection'].sendall(message.encode())
 

@@ -100,6 +100,9 @@ def send_messages(sock):
                 continue
             if len(action_parts) != 4:
                 print('Command is missing parts.')
+                print(action_parts[1])
+                print(action_parts[2])
+                print(action_parts[3])
                 continue
             send_file(sock, action_parts[1], action_parts[2], action_parts[3])
         
@@ -116,7 +119,7 @@ def send_messages(sock):
 
 def receive_messages(sock):
     while True:
-        data = sock.recv(1024)
+        data = sock.recv(3072)
         if not data:
             print("Servidor encerrou a conexão.")
             break
