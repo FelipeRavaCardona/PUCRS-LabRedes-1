@@ -4,7 +4,7 @@ import socket
 import random
 
 SERVER_ADDRESS = ('localhost', 3000)
-BUFF_SIZE = 1200
+BUFF_SIZE = 2048
 
 client_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 client_socket.bind(('localhost', random.randint(1, 9999)))
